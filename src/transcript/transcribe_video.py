@@ -53,6 +53,7 @@ def main():
     """Main function to transcribe a video or audio file."""
     parser = argparse.ArgumentParser(description="Transcribe a video or audio file using local Whisper model.")
     parser.add_argument("input_path", help="Path to the video or audio file (mp4, mov, avi, mp3, m4a).")
+    parser.add_argument("-model", "--model", default="medium", help="Whisper model size (tiny, base, small, medium, large). Default: medium")
     args = parser.parse_args()
 
     if not os.path.exists(args.input_path):
@@ -91,9 +92,9 @@ def main():
             chunks = chunk_audio(audio_path_for_chunking, chunk_folder)
             
             # 3. Transcribe chunks
-            print("Loading Whisper model...")
-            model = whisper.load_model("base")
-            print("Whisper model loaded.")
+            print(f"Loading Whisper model '{args.model}'...")
+            model = whisper.load_model(args.model)
+            print(f"Whisper model '{args.model}' loaded.")
             
             transcripts = transcribe_chunks(chunks, model)
             
