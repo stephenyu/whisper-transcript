@@ -1,15 +1,17 @@
-# Video Transcriber with OpenAI Whisper
+# Video and Audio Transcriber with OpenAI Whisper
 
-This Python script allows you to extract audio from a video file, split it into manageable chunks, and then transcribe each chunk using OpenAI's Whisper model. Finally, it combines all transcriptions into a single text file.
+This Python script allows you to transcribe video or audio files by extracting audio, splitting it into manageable chunks, and then transcribing each chunk using OpenAI's Whisper model. Finally, it combines all transcriptions into a single text file.
 
 ## Features
 
+-   **Handles Video and Audio**: Works with video files (mp4, mov, avi) and audio files (mp3, m4a).
 -   **Audio Extraction**: Extracts audio from various video formats (supported by `moviepy`) to an MP3 file.
--   **Audio Chunking**: Splits the extracted audio into 10-minute MP3 chunks to manage memory and processing for large files.
+-   **Audio Conversion**: Converts M4A files to MP3 for consistent processing.
+-   **Audio Chunking**: Splits the audio into 10-minute MP3 chunks to manage memory and processing for large files.
 -   **Whisper Transcription**: Utilizes the local `base` OpenAI Whisper model to transcribe each audio chunk.
 -   **Combined Transcript**: Merges all individual chunk transcriptions into a single, comprehensive text.
 -   **Temporary File Management**: Automatically creates and cleans up temporary audio files and chunks.
--   **Output to File**: Saves the final transcript to a `.txt` file named after the input video.
+-   **Output to File**: Saves the final transcript to a `.txt` file named after the input file.
 
 ## Prerequisites
 
@@ -21,7 +23,7 @@ Before running the script, ensure you have the following installed:
 
 ## Installation
 
-1.  **Clone the repository (or ensure you have `transcribe_video.py` and `pyproject.toml`):**
+1.  **Clone the repository:**
     ```bash
     # If this is a git repository
     # git clone <repository_url>
@@ -36,21 +38,29 @@ Before running the script, ensure you have the following installed:
 
 ## Usage
 
-To transcribe a video file, run the script from your terminal:
+To transcribe a video or audio file, run the script using `uv`:
 
 ```bash
-python transcribe_video.py <path_to_your_video_file>
+uv run transcript <path_to_your_file>
 ```
 
-Replace `<path_to_your_video_file>` with the actual path to the video you want to transcribe (e.g., `my_movie.mp4`, `videos/presentation.avi`).
+Replace `<path_to_your_file>` with the actual path to the video or audio file you want to transcribe.
+
+**Supported Formats:**
+- Video: `.mp4`, `.mov`, `.avi`
+- Audio: `.mp3`, `.m4a`
 
 **Example:**
 
 ```bash
-python transcribe_video.py videos/my_conference_talk.mp4
+# Transcribe a video file
+uv run transcript videos/my_conference_talk.mp4
+
+# Transcribe an audio file
+uv run transcript audio/podcast_episode.mp3
 ```
 
-The script will print progress updates to the console. Once finished, a text file (e.g., `my_conference_talk.txt`) containing the full transcription will be created in the same directory where you ran the script.
+The script will print progress updates to the console. Once finished, a text file (e.g., `my_conference_talk.txt` or `podcast_episode.txt`) containing the full transcription will be created in the same directory where you ran the script.
 
 ## OpenAI API Key
 
