@@ -5,7 +5,7 @@ This Python script allows you to transcribe video or audio files by extracting a
 ## Features
 
 -   **Handles Video and Audio**: Works with video files (mp4, mov, avi) and audio files (mp3, m4a).
--   **Audio Extraction**: Extracts audio from various video formats (supported by `moviepy`) to an MP3 file.
+-   **Audio Extraction**: Extracts audio from various video formats (supported by `ffmpeg`) to an MP3 file.
 -   **Audio Conversion**: Converts M4A files to MP3 for consistent processing.
 -   **Audio Chunking**: Splits the audio into 10-minute MP3 chunks to manage memory and processing for large files.
 -   **Whisper Transcription**: Utilizes OpenAI's Whisper model (defaults to `medium`, configurable via CLI) to transcribe each audio chunk.
@@ -19,7 +19,7 @@ Before running the script, ensure you have the following installed:
 
 *   **Python 3.10+**: The project specifies Python 3.14, but should work with 3.10 and newer.
 *   **uv**: A fast Python package installer and resolver.
-*   **ffmpeg**: Essential for audio and video processing by `moviepy` and `pydub`. You can install it via your system's package manager (e.g., `brew install ffmpeg` on macOS, `sudo apt-get install ffmpeg` on Debian/Ubuntu, `choco install ffmpeg` on Windows).
+*   **ffmpeg**: Essential for audio and video processing by `imageio-ffmpeg` and `pydub`. You can install it via your system's package manager (e.g., `brew install ffmpeg` on macOS, `sudo apt-get install ffmpeg` on Debian/Ubuntu, `choco install ffmpeg` on Windows).
 
 ## Installation
 

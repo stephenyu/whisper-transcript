@@ -2,17 +2,38 @@
 import argparse
 import os
 import tempfile
+import subprocess
+import imageio_ffmpeg
 from pydub import AudioSegment
-from moviepy import VideoFileClip
 import whisper
 import shutil
 
+# Configure pydub to use the ffmpeg binary from imageio-ffmpeg
+AudioSegment.converter = imageio_ffmpeg.get_ffmpeg_exe()
+
 def extract_audio(video_path, audio_path):
-    """Extracts audio from a video file and saves it as an MP3."""
+    """Extracts audio from a video file and saves it as an MP3 using ffmpeg."""
     print(f"Extracting audio from {video_path}...")
-    video = VideoFileClip(video_path)
-    video.audio.write_audiofile(audio_path, codec='mp3')
-    print(f"Audio extracted and saved to {audio_path}")
+    
+    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    command = [
+        ffmpeg_exe,
+        "-i", video_path,
+        "-vn", # Disable video recording
+        "-acodec", "libmp3lame", # Force mp3 encoding
+        "-q:a", "2", # High quality audio
+        "-y", # Overwrite output file if it exists
+        audio_path
+    ]
+    
+    # Run ffmpeg command
+    try:
+        subprocess.run(command, check=True, capture_output=True)
+        print(f"Audio extracted and saved to {audio_path}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error extracting audio: {e}")
+        print(f"ffmpeg stderr: {e.stderr.decode()}")
+        raise
 
 def chunk_audio(audio_path, chunk_folder, chunk_size_mb=10):
     """Chunks an audio file into smaller pieces of a given size."""
