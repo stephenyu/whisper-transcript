@@ -18,7 +18,7 @@ This Python script allows you to transcribe video or audio files by extracting a
 Before running the script, ensure you have the following installed:
 
 *   **Python 3.10+**: The project specifies Python 3.14, but should work with 3.10 and newer.
-*   **uv**: A fast Python package installer and resolver.
+*   **uv**: A fast Python package installer and resolver. (Install via https://docs.astral.sh/uv/getting-started/installation/)
 *   **ffmpeg**: Essential for audio and video processing by `imageio-ffmpeg` and `pydub`. You can install it via your system's package manager (e.g., `brew install ffmpeg` on macOS, `sudo apt-get install ffmpeg` on Debian/Ubuntu, `choco install ffmpeg` on Windows).
 
 ## Installation
