@@ -74,7 +74,7 @@ def main():
     """Main function to transcribe a video or audio file."""
     parser = argparse.ArgumentParser(description="Transcribe a video or audio file using local Whisper model.")
     parser.add_argument("input_path", help="Path to the video or audio file (mp4, mov, avi, mp3, m4a).")
-    parser.add_argument("-model", "--model", default="medium", help="Whisper model size (tiny, base, small, medium, large). Default: medium")
+    parser.add_argument("-model", "--model", default="small.en", help="Whisper model size (tiny, base, small, medium, large). Default: small.en")
     args = parser.parse_args()
 
     if not os.path.exists(args.input_path):

@@ -8,7 +8,7 @@ This Python script allows you to transcribe video or audio files by extracting a
 -   **Audio Extraction**: Extracts audio from various video formats (supported by `ffmpeg`) to an MP3 file.
 -   **Audio Conversion**: Converts M4A files to MP3 for consistent processing.
 -   **Audio Chunking**: Splits the audio into 10-minute MP3 chunks to manage memory and processing for large files.
--   **Whisper Transcription**: Utilizes OpenAI's Whisper model (defaults to `medium`, configurable via CLI) to transcribe each audio chunk.
+-   **Whisper Transcription**: Utilizes OpenAI's Whisper model (defaults to `small.en`, configurable via CLI) to transcribe each audio chunk.
 -   **Combined Transcript**: Merges all individual chunk transcriptions into a single, comprehensive text.
 -   **Temporary File Management**: Automatically creates and cleans up temporary audio files and chunks.
 -   **Output to File**: Saves the final transcript to a `.txt` file named after the input file.
@@ -51,7 +51,8 @@ Replace `<path_to_your_file>` with the actual path to the video or audio file yo
     - `tiny`
     - `base`
     - `small`
-    - `medium` (default)
+    - `small.en` (default)
+    - `medium`
     - `large`
     - (English-only variants are also supported: `tiny.en`, `base.en`, etc.)
 
@@ -64,7 +65,7 @@ Larger models offer better accuracy but require more computational resources and
 **Examples:**
 
 ```bash
-# Transcribe a video file using the default 'medium' model
+# Transcribe a video file using the default 'small.en' model
 uv run transcript videos/my_conference_talk.mp4
 
 # Transcribe an audio file using the 'tiny' model for faster results
