@@ -62,16 +62,6 @@ uv run transcript audio/podcast_episode.mp3
 
 The script will print progress updates to the console. Once finished, a text file (e.g., `my_conference_talk.txt` or `podcast_episode.txt`) containing the full transcription will be created in the same directory where you ran the script.
 
-## OpenAI API Key
-
-This script uses the **local `base` Whisper model** and therefore **does not require an OpenAI API key** for transcription.
-
-If you were to use the paid OpenAI Whisper API (which is a separate service not directly used by this script's `whisper.load_model()` functionality), you would typically provide your API key by setting the `OPENAI_API_KEY` environment variable:
-
-```bash
-export OPENAI_API_KEY="YOUR_API_KEY_HERE"
-```
-
 ## Customization
 
 -   **Whisper Model**: The script currently uses the `base` Whisper model. You can change this to `tiny`, `small`, `medium`, or `large` (or their `.en` variants for English-only models) by modifying the `whisper.load_model("base")` line in `transcribe_video.py`. Larger models offer better accuracy but require more computational resources and VRAM.

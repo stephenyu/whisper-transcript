@@ -51,7 +51,7 @@ def transcribe_chunks(chunks, model):
 
 def main():
     """Main function to transcribe a video or audio file."""
-    parser = argparse.ArgumentParser(description="Transcribe a video or audio file using OpenAI Whisper.")
+    parser = argparse.ArgumentParser(description="Transcribe a video or audio file using local Whisper model.")
     parser.add_argument("input_path", help="Path to the video or audio file (mp4, mov, avi, mp3, m4a).")
     args = parser.parse_args()
 
