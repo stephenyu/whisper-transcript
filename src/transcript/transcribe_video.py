@@ -60,14 +60,18 @@ def chunk_audio(audio_path, chunk_folder, chunk_size_mb=10):
         print(f"Exported chunk: {chunk_path}")
     return chunks
 
+def transcribe_single_chunk(chunk_path, model):
+    """Helper function to transcribe a single chunk."""
+    print(f"Transcribing {chunk_path}...")
+    result = model.transcribe(chunk_path)
+    print(f"Finished transcribing {chunk_path}")
+    return result["text"]
+
 def transcribe_chunks(chunks, model):
-    """Transcribes a list of audio chunks."""
+    """Transcribes a list of audio chunks sequentially."""
     transcripts = []
     for chunk_path in chunks:
-        print(f"Transcribing {chunk_path}...")
-        result = model.transcribe(chunk_path)
-        transcripts.append(result["text"])
-        print(f"Finished transcribing {chunk_path}")
+        transcripts.append(transcribe_single_chunk(chunk_path, model))
     return transcripts
 
 def main():
