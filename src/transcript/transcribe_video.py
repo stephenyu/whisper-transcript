@@ -3,6 +3,7 @@ import argparse
 import os
 import tempfile
 import subprocess
+import concurrent.futures
 import imageio_ffmpeg
 from pydub import AudioSegment
 import whisper
@@ -10,6 +11,17 @@ import shutil
 
 # Configure pydub to use the ffmpeg binary from imageio-ffmpeg
 AudioSegment.converter = imageio_ffmpeg.get_ffmpeg_exe()
+
+# Global variable for the worker process
+worker_model = None
+
+def init_worker(model_name):
+    """Initializes the Whisper model in a worker process."""
+    global worker_model
+    # Print from process to show activity
+    print(f"Process {os.getpid()} loading model '{model_name}'...")
+    worker_model = whisper.load_model(model_name)
+    print(f"Process {os.getpid()} loaded model.")
 
 def extract_audio(video_path, audio_path):
     """Extracts audio from a video file and saves it as an MP3 using ffmpeg."""
@@ -60,18 +72,23 @@ def chunk_audio(audio_path, chunk_folder, chunk_size_mb=10):
         print(f"Exported chunk: {chunk_path}")
     return chunks
 
-def transcribe_single_chunk(chunk_path, model):
+def transcribe_single_chunk(chunk_path):
     """Helper function to transcribe a single chunk."""
+    global worker_model
     print(f"Transcribing {chunk_path}...")
-    result = model.transcribe(chunk_path)
+    result = worker_model.transcribe(chunk_path)
     print(f"Finished transcribing {chunk_path}")
     return result["text"]
 
-def transcribe_chunks(chunks, model):
-    """Transcribes a list of audio chunks sequentially."""
-    transcripts = []
-    for chunk_path in chunks:
-        transcripts.append(transcribe_single_chunk(chunk_path, model))
+def transcribe_chunks(chunks, model_name):
+    """Transcribes a list of audio chunks in parallel using multiprocessing."""
+    print(f"Starting parallel transcription with model '{model_name}'...")
+    
+    # Use ProcessPoolExecutor to parallelize transcription via multiple processes
+    with concurrent.futures.ProcessPoolExecutor(max_workers=5, initializer=init_worker, initargs=(model_name,)) as executor:
+        # map preserves order
+        transcripts = list(executor.map(transcribe_single_chunk, chunks))
+        
     return transcripts
 
 def main():
@@ -117,11 +134,8 @@ def main():
             chunks = chunk_audio(audio_path_for_chunking, chunk_folder)
             
             # 3. Transcribe chunks
-            print(f"Loading Whisper model '{args.model}'...")
-            model = whisper.load_model(args.model)
-            print(f"Whisper model '{args.model}' loaded.")
-            
-            transcripts = transcribe_chunks(chunks, model)
+            # Note: We pass the model name, not the loaded model object
+            transcripts = transcribe_chunks(chunks, args.model)
             
             # 4. Combine transcripts
             full_transcript = " ".join(transcripts)
