@@ -3,30 +3,41 @@ import argparse
 import os
 import tempfile
 import subprocess
-import concurrent.futures
 import imageio_ffmpeg
 from pydub import AudioSegment
-import whisper
+import mlx_whisper
 import shutil
 
 # Configure pydub to use the ffmpeg binary from imageio-ffmpeg
 AudioSegment.converter = imageio_ffmpeg.get_ffmpeg_exe()
 
-# Global variable for the worker process
-worker_model = None
+# Model name mapping from short names to HuggingFace repo paths
+MODEL_NAME_MAP = {
+    "tiny": "mlx-community/whisper-tiny-mlx",
+    "tiny.en": "mlx-community/whisper-tiny.en-mlx",
+    "base": "mlx-community/whisper-base-mlx",
+    "base.en": "mlx-community/whisper-base.en-mlx",
+    "small": "mlx-community/whisper-small-mlx",
+    "small.en": "mlx-community/whisper-small.en-mlx",
+    "medium": "mlx-community/whisper-medium-mlx",
+    "medium.en": "mlx-community/whisper-medium.en-mlx",
+    "large-v3": "mlx-community/whisper-large-v3-mlx",
+    "turbo": "mlx-community/whisper-turbo",
+    "large-v3-turbo": "mlx-community/whisper-large-v3-turbo",
+    "distil-large-v3": "mlx-community/distil-whisper-large-v3",
+}
 
-def init_worker(model_name):
-    """Initializes the Whisper model in a worker process."""
-    global worker_model
-    # Print from process to show activity
-    print(f"Process {os.getpid()} loading model '{model_name}'...")
-    worker_model = whisper.load_model(model_name)
-    print(f"Process {os.getpid()} loaded model.")
+def get_model_path(model_name):
+    """Returns the HuggingFace repo path for a given model name."""
+    if model_name in MODEL_NAME_MAP:
+        return MODEL_NAME_MAP[model_name]
+    # If not in map, assume it's already a full path
+    return model_name
 
 def extract_audio(video_path, audio_path):
     """Extracts audio from a video file and saves it as an MP3 using ffmpeg."""
     print(f"Extracting audio from {video_path}...")
-    
+
     ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
     command = [
         ffmpeg_exe,
@@ -37,7 +48,7 @@ def extract_audio(video_path, audio_path):
         "-y", # Overwrite output file if it exists
         audio_path
     ]
-    
+
     # Run ffmpeg command
     try:
         subprocess.run(command, check=True, capture_output=True)
@@ -50,7 +61,7 @@ def extract_audio(video_path, audio_path):
 def chunk_audio(audio_path, chunk_folder, chunk_size_mb=10):
     """Chunks an audio file into smaller pieces of a given size."""
     print(f"Chunking audio file: {audio_path}")
-    
+
     file_extension = os.path.splitext(audio_path)[1].lower()
     if file_extension == '.mp3':
         audio = AudioSegment.from_mp3(audio_path)
@@ -63,7 +74,7 @@ def chunk_audio(audio_path, chunk_folder, chunk_size_mb=10):
     # A 128 kbps MP3 file is approximately 1 MB per minute.
     # So, 10MB is approximately 10 minutes or 600,000 ms.
     chunk_length_ms = 10 * 60 * 1000 # 10 minutes
-    
+
     chunks = []
     for i, chunk in enumerate(audio[::chunk_length_ms]):
         chunk_path = os.path.join(chunk_folder, f"chunk_{i}.mp3")
@@ -72,30 +83,29 @@ def chunk_audio(audio_path, chunk_folder, chunk_size_mb=10):
         print(f"Exported chunk: {chunk_path}")
     return chunks
 
-def transcribe_single_chunk(chunk_path):
-    """Helper function to transcribe a single chunk."""
-    global worker_model
+def transcribe_single_chunk(chunk_path, model_path):
+    """Transcribes a single audio chunk using mlx-whisper."""
     print(f"Transcribing {chunk_path}...")
-    result = worker_model.transcribe(chunk_path)
+    result = mlx_whisper.transcribe(chunk_path, path_or_hf_repo=model_path)
     print(f"Finished transcribing {chunk_path}")
     return result["text"]
 
 def transcribe_chunks(chunks, model_name):
-    """Transcribes a list of audio chunks in parallel using multiprocessing."""
-    print(f"Starting parallel transcription with model '{model_name}'...")
-    
-    # Use ProcessPoolExecutor to parallelize transcription via multiple processes
-    with concurrent.futures.ProcessPoolExecutor(max_workers=5, initializer=init_worker, initargs=(model_name,)) as executor:
-        # map preserves order
-        transcripts = list(executor.map(transcribe_single_chunk, chunks))
-        
+    """Transcribes a list of audio chunks sequentially."""
+    model_path = get_model_path(model_name)
+    print(f"Starting transcription with model '{model_name}' ({model_path})...")
+    transcripts = []
+    for i, chunk_path in enumerate(chunks, 1):
+        print(f"Processing chunk {i}/{len(chunks)}...")
+        text = transcribe_single_chunk(chunk_path, model_path)
+        transcripts.append(text)
     return transcripts
 
 def main():
     """Main function to transcribe a video or audio file."""
     parser = argparse.ArgumentParser(description="Transcribe a video or audio file using local Whisper model.")
     parser.add_argument("input_path", help="Path to the video or audio file (mp4, mov, avi, mp3, m4a).")
-    parser.add_argument("-model", "--model", default="small.en", help="Whisper model size (tiny, base, small, medium, large). Default: small.en")
+    parser.add_argument("-model", "--model", default="small.en", help="Whisper model size (tiny, base, small, medium + .en variants, large-v3, turbo, large-v3-turbo, distil-large-v3). Default: small.en")
     args = parser.parse_args()
 
     if not os.path.exists(args.input_path):
@@ -103,7 +113,7 @@ def main():
         return
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        
+
         try:
             file_extension = os.path.splitext(args.input_path)[1].lower()
             temp_audio_path = os.path.join(temp_dir, "source_audio" + file_extension)
@@ -132,17 +142,16 @@ def main():
             chunk_folder = os.path.join(temp_dir, "chunks")
             os.makedirs(chunk_folder, exist_ok=True)
             chunks = chunk_audio(audio_path_for_chunking, chunk_folder)
-            
+
             # 3. Transcribe chunks
-            # Note: We pass the model name, not the loaded model object
             transcripts = transcribe_chunks(chunks, args.model)
-            
+
             # 4. Combine transcripts
             full_transcript = " ".join(transcripts)
-            
+
             print("\n--- Full Transcript ---")
             print(full_transcript)
-            
+
             # 5. Save transcript to a file
             transcript_filename = os.path.splitext(os.path.basename(args.input_path))[0] + ".txt"
             with open(transcript_filename, "w") as f:

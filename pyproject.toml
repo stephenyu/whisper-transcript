@@ -7,8 +7,7 @@ requires-python = ">=3.14"
 dependencies = [
     "imageio-ffmpeg>=0.6.0",
     "pydub==0.25.1",
-    "openai-whisper==20250625",
-    "torch==2.9.1",
+    "mlx-whisper>=0.4.0",
     "audioop-lts",
 ]
 
